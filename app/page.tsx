@@ -10,7 +10,7 @@ const api = async (url: string, init?: RequestInit) => {
   const r = await fetch(url, init);
   if (r.status === 401) { location.href = "/login"; throw new Error("auth"); }
   const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error(j.error || "요청에 실패했습니다.");
+  if (!r.ok) throw new Error(j.error || `요청에 실패했습니다. (오류 코드 ${r.status})`);
   return j;
 };
 const post = (url: string, body: unknown, method = "POST") =>

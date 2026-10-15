@@ -4,9 +4,13 @@ import { db, EMP_SELECT } from "@/lib/db";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const p = await db();
-  const { rows } = await p.query(`${EMP_SELECT} ORDER BY (SELECT MIN(id) FROM employees x WHERE x.dept = e.dept), e.id`);
-  return NextResponse.json({ employees: rows });
+  try {
+    const p = await db();
+    const { rows } = await p.query(`${EMP_SELECT} ORDER BY (SELECT MIN(id) FROM employees x WHERE x.dept = e.dept), e.id`);
+    return NextResponse.json({ employees: rows });
+  } catch (e: any) {
+    return NextResponse.json({ error: `DB 연결 실패: ${e.message}` }, { status: 500 });
+  }
 }
 
 export async function POST(req: Request) {

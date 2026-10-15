@@ -67,8 +67,9 @@ export async function POST(req: Request) {
   catch { return NextResponse.json({ error: "엑셀(.xlsx) 파일을 읽을 수 없습니다." }, { status: 400 }); }
   if (!parsed.rows.length) return NextResponse.json({ error: "가져올 직원 행을 찾지 못했습니다. (부서 제목행 → '이름' 헤더행 형식)" }, { status: 400 });
 
-  const p = await db();
-  const client = await p.connect();
+  let client;
+  try { client = await (await db()).connect(); }
+  catch (e: any) { return NextResponse.json({ error: `DB 연결 실패: ${e.message}` }, { status: 500 }); }
   let added = 0, existed = 0;
   try {
     await client.query("BEGIN");
@@ -80,9 +81,9 @@ export async function POST(req: Request) {
       added++;
     }
     await client.query("COMMIT");
-  } catch (e) {
-    await client.query("ROLLBACK");
-    throw e;
+  } catch (e: any) {
+    await client.query("ROLLBACK").catch(() => {});
+    return NextResponse.json({ error: `저장 실패: ${e.message}` }, { status: 500 });
   } finally { client.release(); }
   return NextResponse.json({ added, existed, skipped: parsed.skipped });
 }
